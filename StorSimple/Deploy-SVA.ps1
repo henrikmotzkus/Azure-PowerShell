@@ -6,6 +6,7 @@ $RessourceGroupName = "yourrgname"
 $StorageAccountName = $RessourceGroupName + "storage"
 $SubscriptionId = "YOUR SUBSCRIPTION ID"
 
+# Einloggen und Azure RG und Stoorage-Account anlegen
 
 $AzureCtx = login-azurermaccount
 $Subscription = Select-AzureRmSubscription -SubscriptionId $SubscriptionId
@@ -16,7 +17,13 @@ $fd = New-Object system.windows.forms.openfiledialog
 $fd.InitialDirectory = 'c:\'
 $fd.MultiSelect = $true
 $fd.showdialog()
+
+# Image uploaden
+
 Add-AzureRmVhd -ResourceGroupName $RessourceGroupName -Destination $urlOfUploadedImageVhd -LocalFilePath $fd.filenames[0].ToString()
+
+# Netzwerk anlegen
+
 $subnetName = $RessourceGroupName + "_subnet"
 $singleSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name $subnetName -AddressPrefix "10.1.0.0/24"
 $vnetName = $RessourceGroupName + "_vnet"
@@ -25,6 +32,9 @@ $ipName = $RessourceGroupName + "_pubip"
 $pip = New-AzureRmPublicIpAddress -Name $ipName -ResourceGroupName $RessourceGroupName -Location $LocationName -AllocationMethod Dynamic
 $nicName = $RessourceGroupName + "_svanic"
 $nic = New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $RessourceGroupName -Location $LocationName -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id
+
+# VM Objekt anlegen und bearbeiten
+
 $cred = Get-Credential
 $vmName = $RessourceGroupName  + "vm"
 $vmSize = "Standard_F4"
@@ -38,6 +48,9 @@ $osDiskUri = '{0}vhds/{1}-{2}.vhd' -f $storageAcc.PrimaryEndpoints.Blob.ToString
 $vm = Set-AzureRmVMOSDisk -VM $vm -Name $osDiskName -VhdUri $osDiskUri -CreateOption fromImage -SourceImageUri $urlOfUploadedImageVhd -Windows
 $urlOfDataVhd = "https://" + $StorageAccountName + ".blob.core.windows.net/vhds/datadisk1.vhd"
 $vm = Add-AzureRmVMDataDisk -VM $vm -Name "datadisk" -VhdUri $urlOfDataVhd -LUN 0 -Caching ReadWrite -DiskSizeinGB 500 -CreateOption Empty
+
+# VM anlegen
+
 New-AzureRmVM -ResourceGroupName $RessourceGroupName -Location $LocationName -VM $vm
 
 
